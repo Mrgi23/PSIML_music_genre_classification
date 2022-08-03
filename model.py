@@ -1,2 +1,41 @@
-import torch.nn as nn
-import torch.nn.functional as func
+import torch
+import os 
+from preprocessing import Preprocessing
+import torchaudio
+from torchaudio.datasets import GTZAN
+from torchaudio.transforms import MelSpectrogram,MFCC,Spectrogram
+from torch.utils.data import TensorDataset
+from dataset import AudioDataset
+from torch.utils.data import random_split
+
+path = os.path.join('Data','genres_original')
+dataset = GTZAN('Data',folder_in_archive='genres_original')
+
+sample_rate = 22050
+
+n_fft = 1024
+win_length = None
+hop_length = 512
+
+# define transformation
+spectrogram = Spectrogram(
+    n_fft=n_fft,
+    win_length=win_length,
+    hop_length=hop_length,
+    center=True,
+    pad_mode="reflect",
+    power=2.0,
+)
+
+dataset = AudioDataset(dataset,spectrogram)
+
+train_lenght = int(len(dataset)*0.6)
+validation_lenght = int(len(dataset)*0.2)
+test_lenght = len(dataset) - train_lenght - validation_lenght
+train_dataset,validation_dataset, test_dataset = random_split(dataset,lengths=[train_lenght,validation_lenght,test_lenght])
+
+
+
+
+
+        
