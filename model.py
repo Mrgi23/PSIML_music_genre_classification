@@ -1,5 +1,6 @@
 from torch.nn import Module,Conv2d,LazyLinear,Flatten,MaxPool2d,AvgPool2d
 from torch.nn.functional import sigmoid,softmax,relu
+from torch import flatten
 class MusicModel(Module):
     def __init__(self,input_shape):
         super(MusicModel, self).__init__()
@@ -9,7 +10,6 @@ class MusicModel(Module):
         self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=(1,4), groups=256)
         self.maxpolling_last = MaxPool2d(kernel_size=(1,26))
         self.avgpolling = AvgPool2d(kernel_size=(1,26))
-        self.flat = Flatten()
         self.linear1 = LazyLinear(out_features=300)
         self.linear2 = LazyLinear(out_features=150)
         self.linear3 = LazyLinear(out_features=10)
@@ -25,7 +25,7 @@ class MusicModel(Module):
         x = relu(x)
         x_1 = self.maxpolling_last(x)
         x_2 = self.avgpolling(x)
-        x = self.flat(x_1 + x_2)
+        x = flatten(x_1 + x_2, start_dim=1)
         x = self.linear1(x)
         x = relu(x)
         x = self.linear2(x)
