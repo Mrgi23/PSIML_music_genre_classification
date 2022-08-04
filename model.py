@@ -1,14 +1,37 @@
-from torch.nn import Module,Conv2d,Linear
-from torch.nn.functional import sigmoid,softmax
+from torch.nn import Module,Conv2d,LazyLinear,Flatten,MaxPool2d,AvgPool2d
+from torch.nn.functional import sigmoid,softmax,relu
 class MusicModel(Module):
     def __init__(self):
         super(MusicModel, self).__init__()
-        self.conv = Conv2d(3,20,3)
-        self.layer = Linear(in_features=20, out_features=10, bias=True)
+        self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=4, groups=1)
+        self.maxpolling = MaxPool2d(kernel_size=(2,1))
+        self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=4, groups=128)
+        self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=4, groups=256)
+        self.maxpolling_last = MaxPool2d(kernel_size=(26,1))
+        self.avgpolling = AvgPool2d(kernel_size=(26,1))
+        self.flat = Flatten()
+        self.linear1 = LazyLinear(out_features=300)
+        self.linear2 = LazyLinear(out_features=150)
+        self.linear3 = LazyLinear(out_features=10)
 
     def forward(self, x):
-        x = self.conv(x)
-        x = self.layer(x)
+        x = self.conv1(x)
+        x = relu(x)
+        x = self.maxpolling(x)
+        x = self.conv2(x)
+        x = relu(x)
+        x = self.maxpolling(x)
+        x = self.conv3(x)
+        x = relu(x)
+        x_1 = self.maxpolling_last(x)
+        x_2 = self.avgpolling(x)
+        x = self.flat(x_1 + x_2)
+        x = self.linear1(x)
+        x = relu(x)
+        x = self.linear2(x)
+        x = relu(x)
+        x = self.linear3(x)
+
         x = softmax(x)
         return x
 
