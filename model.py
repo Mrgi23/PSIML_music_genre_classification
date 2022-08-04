@@ -3,10 +3,10 @@ from torch.nn.functional import sigmoid,softmax,relu
 class MusicModel(Module):
     def __init__(self,input_shape):
         super(MusicModel, self).__init__()
-        self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=4, groups=1)
+        self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=(513,4), groups=1)
         self.maxpolling = MaxPool2d(kernel_size=(1,2))
-        self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=4, groups=128)
-        self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=4, groups=256)
+        self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=(1,4), groups=128)
+        self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=(1,4), groups=256)
         self.maxpolling_last = MaxPool2d(kernel_size=(1,26))
         self.avgpolling = AvgPool2d(kernel_size=(1,26))
         self.flat = Flatten()
