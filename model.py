@@ -1,7 +1,7 @@
 from torch.nn import Module,Conv2d,LazyLinear,Flatten,MaxPool2d,AvgPool2d
 from torch.nn.functional import sigmoid,softmax,relu
 class MusicModel(Module):
-    def __init__(self):
+    def __init__(self,input_shape):
         super(MusicModel, self).__init__()
         self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=4, groups=1)
         self.maxpolling = MaxPool2d(kernel_size=(2,1))
@@ -31,6 +31,7 @@ class MusicModel(Module):
         x = self.linear2(x)
         x = relu(x)
         x = self.linear3(x)
+        x = relu(x)
 
         x = softmax(x)
         return x
