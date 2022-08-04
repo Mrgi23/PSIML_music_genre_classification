@@ -5,24 +5,9 @@ import torchaudio
 from torchaudio.datasets import GTZAN
 from torchaudio.transforms import MelSpectrogram,MFCC,Spectrogram
 from torch.utils.data import DataLoader
-from dataset import AudioDataset
-from torch.nn import Module
 from torch.utils.data import random_split
-from torch.nn.functional import sigmoid,softmax
-import pytorch_lightning as pl
-class MusicModel(Module):
-    def __init__(self):
-        super(MusicModel, self).__init__()
-        self.conv = torch.nn.Conv2d(3,20)
-        self.layer = torch.nn.Linear(in_features=20, out_features=10, bias=True)
-
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.layer(x)
-        x = softmax(x)
-        return x
-
+from dataset import AudioDataset
+from model import MusicModel
 path = os.path.join('Data','genres_original')
 dataset = GTZAN('Data',folder_in_archive='genres_original')
 
@@ -49,13 +34,5 @@ validation_lenght = int(len(dataset)*0.2)
 test_lenght = len(dataset) - train_lenght - validation_lenght
 train_dataset,validation_dataset, test_dataset = random_split(dataset,lengths=[train_lenght,validation_lenght,test_lenght])
 train_dataloader = DataLoader(train_dataset,batch_size=32, shuffle=True)
-trainer = pl.Trainer(limit_train_batches=32, max_epochs=1)
 model = MusicModel()
-trainer.fit(model=model, train_dataloaders=train_dataloader)
 print('done')
-
-
-
-
-
-        
