@@ -7,26 +7,15 @@ from torchaudio.transforms import MelSpectrogram,MFCC,Spectrogram
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from dataset import AudioDataset
-#from model import MusicModel
-path = os.path.join('Data','genres_original')
-dataset = GTZAN('Data',folder_in_archive='genres_original')
+from model import MusicModel
 
-sample_rate = 22050
-
-n_fft = 1024
-win_length = None
-hop_length = 512
-
-# define transformation
-spectrogram = Spectrogram(
-    n_fft=n_fft,
-    win_length=win_length,
-    hop_length=hop_length,
-    center=True,
-    pad_mode="reflect",
-    power=2.0,
-)
-dataset = AudioDataset(dataset,spectrogram)
+preproc = Preprocessing()
+args = {'ROOT': './Data',
+        'FOLDER': 'genres_original',
+        'NFFT': 1024,
+        'SIZE': 660000,
+        'SPLIT_PARTITIONS': 10}
+audio,dataset = preproc.preprocessing(args=args)
 
 train_lenght = int(len(dataset)*0.6)
 validation_lenght = int(len(dataset)*0.2)
