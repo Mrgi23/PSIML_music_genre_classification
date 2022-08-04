@@ -33,6 +33,10 @@ train_lenght = int(len(dataset)*0.6)
 validation_lenght = int(len(dataset)*0.2)
 test_lenght = len(dataset) - train_lenght - validation_lenght
 train_dataset,validation_dataset, test_dataset = random_split(dataset,lengths=[train_lenght,validation_lenght,test_lenght])
+for x,y in train_dataset:
+    if x.shape[2]!=1290:
+        print(x.shape)
+
 train_dataloader = DataLoader(train_dataset,batch_size=32, shuffle=True)
 model = MusicModel()
 print('done')
