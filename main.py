@@ -1,10 +1,10 @@
+from pickletools import optimize
 import torch
 import os 
 from preprocessing import Preprocessing
-import torchaudio
-from torchaudio.datasets import GTZAN
-from torchaudio.transforms import MelSpectrogram,MFCC,Spectrogram
 from torch.utils.data import DataLoader
+from torch.nn import CrossEntropyLoss
+from torch.optim import Adam
 from torch.utils.data import random_split
 from dataset import AudioDataset
 from model import MusicModel
@@ -21,37 +21,28 @@ audio,dataset = preproc.preprocessing(args=args)
 train_lenght = int(len(dataset)*0.6)
 validation_lenght = int(len(dataset)*0.2)
 test_lenght = len(dataset) - train_lenght - validation_lenght
-train_dataset,validation_dataset, test_dataset = random_split(dataset,lengths=[train_lenght,validation_lenght,test_lenght])
-train_dataset[0]
-train_dataloader = DataLoader(train_dataset,batch_size=32, shuffle=True)
-x=next(iter(train_dataloader))[0]
+train_dataset, validation_dataset, test_dataset = random_split(dataset,lengths=[train_lenght,validation_lenght,test_lenght])
+print('Splitting done!\n')
 
+model = MusicModel()
 
-model = MusicModel(x.shape)
-criterion = CrossEntropyLoss()
-optimizer = Adam(model.parameters())
-num_of_epochs = 100
-for epoch in range(num_of_epochs):  # loop over the dataset multiple times
+num_epochs = 2
+batch_size = 32
+device = 'cpu'
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+validation_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
 
-    running_loss = 0.0
-    for i, data in enumerate(train_dataloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
+loss_func = CrossEntropyLoss()
+lr = 0.01
+optimizer = Adam(model.parameters(), lr=lr)
+args = {'num_epochs': num_epochs,
+        'batch_size': batch_size,
+        'device': device,
+        'train_dataloader': train_dataloader,
+        'validation_dataloader': validation_dataloader,
+        'loss_func': loss_func,
+        'optimizer': optimizer}
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        running_loss += loss.item()
-        if i % 100 == 99:    # print every 2000 mini-batches
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-            running_loss = 0.0
-
-print('Finished Training')
-print('done')
+print('Loading done!\n')
+model.fit(args=args)
+print('Training done!\n')
