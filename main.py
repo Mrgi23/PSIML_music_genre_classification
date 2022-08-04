@@ -7,7 +7,7 @@ from torchaudio.transforms import MelSpectrogram,MFCC,Spectrogram
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 from dataset import AudioDataset
-from model import MusicModel
+#from model import MusicModel
 path = os.path.join('Data','genres_original')
 dataset = GTZAN('Data',folder_in_archive='genres_original')
 
