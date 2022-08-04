@@ -33,7 +33,7 @@ class MusicModel(Module):
         x = self.linear3(x)
         x = relu(x)
 
-        x = softmax(x)
+        x = softmax(x, 1)
         return x
 
 

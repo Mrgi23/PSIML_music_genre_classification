@@ -1,8 +1,8 @@
-import numpy as np
 import copy
 from torchaudio.datasets import GTZAN
 from torchaudio.transforms import Spectrogram, AmplitudeToDB
 from dataset import AudioDataset
+import pickle
 
 class Preprocessing():
     
@@ -38,7 +38,19 @@ class Preprocessing():
         
     
     def preprocessing(self, args):
-        self.__load_file(ROOT=args['ROOT'], FOLDER=args['FOLDER'])
-        self.__load_transform(NFFT=args['NFFT'])
-        self.__split(SIZE=args['SIZE'], SPLIT_PARTITIONS=args['SPLIT_PARTITIONS'])
-        return AudioDataset(data=self.__data), AudioDataset(data=self.__spectrograms)
+        try:
+            with open('./pickle_data', 'rb') as pickle_in:
+                dic = pickle.load(pickle_in)
+                pickle_in.close()
+            return None, dic['spectrograms']
+        except FileNotFoundError:
+            self.__load_file(ROOT=args['ROOT'], FOLDER=args['FOLDER'])
+            self.__load_transform(NFFT=args['NFFT'])
+            self.__split(SIZE=args['SIZE'], SPLIT_PARTITIONS=args['SPLIT_PARTITIONS'])
+            audio_data = AudioDataset(data=self.__data)
+            spectrograms = AudioDataset(data=self.__spectrograms)
+            dic = {'spectrograms': spectrograms}
+            with open('./pickle_data', 'wb') as pickle_out:
+                pickle.dump(dic, pickle_out)
+                pickle_out.close()
+            return audio_data, spectrograms

@@ -3,3 +3,4 @@ Literature/
 __pycache__/
 psiml/
 psiml-venv/
+pickle_data
