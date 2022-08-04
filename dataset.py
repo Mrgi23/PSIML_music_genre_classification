@@ -9,5 +9,5 @@ class AudioDataset(Dataset):
     def __len__(self):
         return len(self.data)
     def __getitem__(self, index):
-        x,fs,y =self.data[index]
-        return (self.transform(x)[:,:self.num_frames],fs,y)
+        x,_,y =self.data[index]
+        return (self.transform(x)[:,:self.num_frames],y)
