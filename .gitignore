@@ -4,3 +4,4 @@ __pycache__/
 psiml/
 psiml-venv/
 pickle_data
+pickle_weights
