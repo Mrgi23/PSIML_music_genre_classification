@@ -8,16 +8,18 @@ class MusicModel(Module):
     def __init__(self):
         super(MusicModel, self).__init__()
         self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=(513,4), groups=1)
-        self.maxpolling = MaxPool2d(kernel_size=(1,2))
-        self.dropout = Dropout(0.3)
         self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=(1,4), groups=128)
         self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=(1,4), groups=256)
-        self.maxpolling_last = MaxPool2d(kernel_size=(1,26))
-        self.avgpolling = AvgPool2d(kernel_size=(1,26))
-        self.flat = Flatten()
         self.linear1 = Linear(in_features=256, out_features=300)
         self.linear2 = Linear(in_features=300, out_features=150)
         self.linear3 = Linear(in_features=150, out_features=10)
+
+        self.avgpolling = AvgPool2d(kernel_size=(1,26))
+        self.maxpolling = MaxPool2d(kernel_size=(1,2))
+        self.maxpolling_last = MaxPool2d(kernel_size=(1,26))
+        self.flat = Flatten()
+        
+        self.dropout = Dropout(0.3)
 
     def forward(self, x):
         x = self.conv1(x)

@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
                 # test_dataset = AudioDataset(test_dataset)
                 # test_dataset.preprocess(args=args_dataset)
-                # print('Splitting done!\n')
+                print('Splitting done!\n')
 
                 model = MusicModel()
 
