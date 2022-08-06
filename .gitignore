@@ -6,3 +6,4 @@ psiml-venv-librosa/
 pickle_data
 pickle_transform
 pickle_weights
+*.png

@@ -4,7 +4,6 @@ from torch import tensor
 from librosa import feature as ft
 import numpy as np
 import pickle
-
 class AudioDataset(Dataset):
 
     def __init__(self, data):
@@ -23,7 +22,7 @@ class AudioDataset(Dataset):
     def __load_transform(self, NFFT):
         self.__transform_spec = Spectrogram(n_fft=NFFT, hop_length=NFFT//2, center=False, pad=24, power=1.0)
         self.__transform_A2dB = AmplitudeToDB()
-        self.__transform_MFCC = MFCC(sample_rate=22500,n_mfcc=40,melkwargs={'n_fft':NFFT,'hop_length':NFFT//2,'center':False,'pad':28})
+        self.__transform_MFCC = MFCC(sample_rate=22500,n_mfcc=13,melkwargs={'n_fft':2*NFFT,'hop_length':NFFT//2,'center':False,'pad':28})
     
     def __split(self, SPLIT_PARTITIONS, NFFT):
         data = []
@@ -40,19 +39,19 @@ class AudioDataset(Dataset):
 
                 # MFFC
                 tmp2 = self.__transform_MFCC(data_sample)
-                data_dict['mfcc'] = tmp2
+                data_dict['mfcc'] = tmp2.reshape(1,tmp2.shape[1]*2,-1)
 
                 # Spectral centroid
                 tmp3 = ft.spectral_centroid(y=data_sample.numpy()[0], n_fft=NFFT)
-                mv1 = tensor([np.mean(tmp3)]).unsqueeze(dim=1)
-                std1 = tensor([np.std(tmp3)]).unsqueeze(dim=1)
+                mv1 = tensor([np.mean(tmp3)]).float()
+                std1 = tensor([np.std(tmp3)]).float()
                 data_dict['c_mv'] = mv1
                 data_dict['c_std'] = std1
 
                 # Spectral roll-off
                 tmp4 = ft.spectral_rolloff(y=data_sample.numpy()[0], n_fft=NFFT)
-                mv2 = tensor([np.mean(tmp4)]).unsqueeze(dim=1)
-                std2 = tensor([np.std(tmp4)]).unsqueeze(dim=1)
+                mv2 = tensor([np.mean(tmp4)]).float()
+                std2 = tensor([np.std(tmp4)]).float()
                 data_dict['r_mv'] = mv2
                 data_dict['r_std'] = std2
 

@@ -11,13 +11,15 @@ from torch import manual_seed
 import pickle
 from matplotlib import pyplot as plt
 import numpy as np
-
+from torch import Generator
+import os
 if __name__ == '__main__':
         loader = Loader()
         args_loader = {'ROOT': './Data',
                        'FOLDER': 'genres_original',
                        'SIZE': 660000}
         audio = loader.load(args=args_loader)
+        classes, classes_genre = loader.classes()
         print('Loading done!\n')
 
         args_dataset = {'NFFT': 1024,
@@ -26,15 +28,16 @@ if __name__ == '__main__':
         audio.preprocess(args=args_dataset)
 
         total_test_acc = []
-        num_try = 10
-        seeds = np.random.randint(1, 1024, num_try)
+        best_models = []
+        num_try = 5
+        seeds = np.arange(0,num_try)
         for n, seed in enumerate(seeds):
                 manual_seed(seed=seed)
                 train_lenght = int(len(audio)*0.75)
                 validation_lenght = int(len(audio)*0.15)
                 test_lenght = len(audio) - train_lenght - validation_lenght
-                train_dataset, validation_dataset, test_dataset = random_split(audio, lengths=[train_lenght,validation_lenght,test_lenght])
-
+                train_dataset, validation_dataset, test_dataset = random_split(audio, lengths=[train_lenght,validation_lenght,test_lenght], 
+                                                                                generator=Generator().manual_seed(int(seed)))
                 # train_dataset = AudioDataset(train_dataset)
                 # train_dataset.preprocess(args=args_dataset)
 
@@ -45,13 +48,14 @@ if __name__ == '__main__':
                 # test_dataset.preprocess(args=args_dataset)
                 print('Splitting done!\n')
 
-                model = MusicModel()
 
                 num_epochs = 1000
-                batch_size = 250
+                batch_size = 50
                 device = 'cuda'
                 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
                 validation_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+                data_used = list(next(iter(train_dataloader))[0].keys())
+                model = MusicModel(['spectrogram','mfcc'])
 
                 loss_func = CrossEntropyLoss()
                 lr = 5e-5
@@ -64,37 +68,34 @@ if __name__ == '__main__':
                         'optimizer': optimizer}
 
                 model = model.to(device=device)
-
-                try:
+                if os.path.exists('./pickle_weights'):
                         with open('./pickle_weights', 'rb') as pickle_in:
-                                dic = pickle.load(pickle_in)
-                                pickle_in.close()
-                        model.load_state_dict(dic['model_weights'])         
-                except FileNotFoundError:
+                                state = pickle.load(pickle_in)
+                        model.load_state_dict(state)         
+                else:
                         model.fit(args=args)
-                        if n == 19:
-                                dic = {'model_weights': model.state_dict()}
-                                with open('./pickle_weights', 'wb') as pickle_out:
-                                        pickle.dump(dic, pickle_out)
-                                        pickle_out.close()
-                print('Training done!\n')
+                        print('Training done!\n')
 
-                test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+
+                test_dataloader = DataLoader(test_dataset, batch_size=len(test_dataset), num_workers=0)
                 args = {'test_dataloader': test_dataloader,
-                        'device': device}
+                        'device': device,
+                        'seed':seed,
+                        'classes':classes,
+                        'classes_genre':classes_genre}
                 
                 model.predict(args=args)
-                total_test_acc.append(deepcopy(model.test_accuracy))
+                best_models.append(model.state_dict())
+                total_test_acc.append(model.test_accuracy)
+        with open('./pickle_weights', 'wb') as pickle_out:
+                pickle.dump(best_models[np.argmax(total_test_acc)], pickle_out)
         fig = plt.figure(figsize=(16, 9))
         plt.xlabel('No. of trys')
         plt.ylabel('Accuracy [%]')
-        plt.plot(np.arange(num_try), total_test_acc, label='Accuracy')
-        plt.plot(np.arange(num_try), np.mean(total_test_acc)*np.ones(num_try), label='Mean value')
+        plt.xticks(np.arange(1,num_try+1))
+        plt.plot(np.arange(1, num_try+1), total_test_acc, label='Accuracy')
+        plt.plot(np.arange(1, num_try+1), np.mean(total_test_acc)*np.ones(num_try), label='Mean value')
         plt.legend(loc='upper right')
         fig.savefig('CrossValidation.png')
 
-        dic = {'seeds': seeds}
-        with open('./pickle_seeds', 'rb') as pickle_in:
-                dic = pickle.load(pickle_in)
-                pickle_in.close()
                 
