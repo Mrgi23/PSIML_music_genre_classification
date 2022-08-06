@@ -1,6 +1,6 @@
 from pickletools import optimize
 import torch
-from torch.nn import Module, Conv2d, Linear, Flatten, MaxPool2d,AvgPool2d
+from torch.nn import Module, Conv2d, Linear, Flatten, MaxPool2d, AvgPool2d, Dropout
 from torch.nn.functional import softmax, relu
 import copy
 class MusicModel(Module):
@@ -9,6 +9,7 @@ class MusicModel(Module):
         super(MusicModel, self).__init__()
         self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=(513,4), groups=1)
         self.maxpolling = MaxPool2d(kernel_size=(1,2))
+        self.dropout = Dropout(0.3)
         self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=(1,4), groups=128)
         self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=(1,4), groups=256)
         self.maxpolling_last = MaxPool2d(kernel_size=(1,26))
@@ -20,21 +21,27 @@ class MusicModel(Module):
 
     def forward(self, x):
         x = self.conv1(x)
+        x = self.dropout(x)
         x = relu(x)
         x = self.maxpolling(x)
         x = self.conv2(x)
+        x = self.dropout(x)
         x = relu(x)
         x = self.maxpolling(x)
         x = self.conv3(x)
+        x = self.dropout(x)
         x = relu(x)
         x_1 = self.maxpolling_last(x)
         x_2 = self.avgpolling(x)
         x = self.flat(x_1 + x_2)
         x = self.linear1(x)
+        x = self.dropout(x)
         x = relu(x)
         x = self.linear2(x)
+        x = self.dropout(x)
         x = relu(x)
         x = self.linear3(x)
+        x = self.dropout(x)
         x = relu(x)
 
         x = softmax(x, 1)
@@ -97,3 +104,26 @@ class MusicModel(Module):
             if break_flag:
                 break
         self.load_state_dict(best_model)
+    
+    def predict(self, args):
+        correct = 0
+        total = 0
+
+        test_dataloader = args['test_dataloader']
+        device = args['device']
+
+        self.eval()
+        with torch.no_grad():
+            for i, (data, label) in enumerate(test_dataloader):
+                data = data.to(device)
+                label = label.to(device)
+
+                output = self(data)
+                _, predicted = torch.max(output, 1)
+                _, label = torch.max(label, 1)
+
+                total += label.size(0)
+                correct += (predicted == label).sum()
+            
+            self.test_accuracy = 100*float(correct)/total
+            print(f'testing accuracy: {self.test_accuracy}%' )
