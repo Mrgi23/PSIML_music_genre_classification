@@ -1,12 +1,12 @@
+from curses.ascii import SP
 from pickletools import optimize
 import torch
-from torch.nn import Module, Conv2d, Linear, Flatten, MaxPool2d, AvgPool2d, Dropout
+from torch.nn import Module, Conv2d, Linear, Flatten, MaxPool2d, AvgPool2d, Dropout, AdaptiveAvgPool2d
 from torch.nn.functional import softmax, relu
 import copy
-class MusicModel(Module):
-
+class SpectogramModule(Module):
     def __init__(self):
-        super(MusicModel, self).__init__()
+        super(SpectogramModule, self).__init__()
         self.conv1 = Conv2d(in_channels=1, out_channels=128, kernel_size=(513,4), groups=1)
         self.conv2 = Conv2d(in_channels=128, out_channels=256, kernel_size=(1,4), groups=128)
         self.conv3 = Conv2d(in_channels=256, out_channels=256, kernel_size=(1,4), groups=256)
@@ -48,6 +48,44 @@ class MusicModel(Module):
 
         x = softmax(x, 1)
         return x
+class MFCCModuel():
+    def __init__(self):
+        super(MFCCModuel, self).__init__()
+
+        self.conv1 = Conv2d(in_channels=1, out_channels=256, kernel_size=(3,3), groups=1)
+        self.conv2 = Conv2d(in_channels=1, out_channels=256, kernel_size=(3,3), groups=1)
+        self.avgpolling = AvgPool2d(kernel_size=(3,3),count_include_pad=True)
+        self.conv3 = Conv2d(in_channels=1, out_channels=256, kernel_size=(3,3), groups=1)
+        self.conv4 = Conv2d(in_channels=1, out_channels=512, kernel_size=(4,4), groups=1)
+        self.globalpolling = AdaptiveAvgPool2d((1,1))
+        self.flat = Flatten()
+        self.linear1 = Linear(in_features=512, out_features=256)
+        self.linear2 = Linear(in_features=256, out_features=128)
+        self.linear3 = Linear(in_features=128, out_features=10)
+    def forward(self, x):
+        x = self.conv1(x)
+        x = relu(x)
+        x = self.conv2(x)
+        x = relu(x)
+        x = self.avgpolling(x)
+        x = self.conv3(x)
+        x = relu(x)
+        x = self.conv4(x)
+        x = relu(x)
+        x = self.globalpolling(x)
+        x = self.flat(x)
+        x = self.linear1(x)
+        x = relu(x)
+        x = self.linear2(x)
+        x = relu(x)
+        x = self.linear3(x)
+        x = softmax(x)
+        
+class MusicModel(Module):
+    def __init__(self):
+        super(MusicModel, self).__init__()
+        self.spectogram = SpectogramModule()
+        self.mfcc = MFCCModuel()
 
     def fit(self, args):
 
