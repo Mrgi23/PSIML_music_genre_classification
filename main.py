@@ -20,8 +20,13 @@ if __name__ == '__main__':
         audio = loader.load(args=args_loader)
         print('Loading done!\n')
 
+        args_dataset = {'NFFT': 1024,
+                        'SPLIT_PARTITIONS': 10}
+
+        audio.preprocess(args=args_dataset)
+
         total_test_acc = []
-        num_try = 20
+        num_try = 10
         seeds = np.random.randint(1, 1024, num_try)
         for n, seed in enumerate(seeds):
                 manual_seed(seed=seed)
@@ -30,18 +35,15 @@ if __name__ == '__main__':
                 test_lenght = len(audio) - train_lenght - validation_lenght
                 train_dataset, validation_dataset, test_dataset = random_split(audio, lengths=[train_lenght,validation_lenght,test_lenght])
 
-                args_dataset = {'NFFT': 1024,
-                                'SPLIT_PARTITIONS': 10}
+                # train_dataset = AudioDataset(train_dataset)
+                # train_dataset.preprocess(args=args_dataset)
 
-                train_dataset = AudioDataset(train_dataset)
-                train_dataset.preprocess(args=args_dataset)
+                # validation_dataset = AudioDataset(validation_dataset)
+                # validation_dataset.preprocess(args=args_dataset)
 
-                validation_dataset = AudioDataset(validation_dataset)
-                validation_dataset.preprocess(args=args_dataset)
-
-                test_dataset = AudioDataset(test_dataset)
-                test_dataset.preprocess(args=args_dataset)
-                print('Splitting done!\n')
+                # test_dataset = AudioDataset(test_dataset)
+                # test_dataset.preprocess(args=args_dataset)
+                # print('Splitting done!\n')
 
                 model = MusicModel()
 
@@ -83,10 +85,16 @@ if __name__ == '__main__':
                 
                 model.predict(args=args)
                 total_test_acc.append(deepcopy(model.test_accuracy))
-        plt.figure(figsize=(16, 9))
+        fig = plt.figure(figsize=(16, 9))
         plt.xlabel('No. of trys')
         plt.ylabel('Accuracy [%]')
         plt.plot(np.arange(num_try), total_test_acc, label='Accuracy')
         plt.plot(np.arange(num_try), np.mean(total_test_acc)*np.ones(num_try), label='Mean value')
-        plt.show()
+        plt.legend(loc='upper right')
+        fig.savefig('CrossValidation.png')
+
+        dic = {'seeds': seeds}
+        with open('./pickle_seeds', 'rb') as pickle_in:
+                dic = pickle.load(pickle_in)
+                pickle_in.close()
                 

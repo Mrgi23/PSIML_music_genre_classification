@@ -2,6 +2,6 @@ Data/
 Literature/
 __pycache__/
 psiml/
-psiml-venv/
+psiml-venv-librosa/
 pickle_data
 pickle_weights
